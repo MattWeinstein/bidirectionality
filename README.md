@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bidirectionality
 
-## Getting Started
+The **bidirectional component** of a One Health surveillance system for
+Arizona. This subteam ships:
 
-First, run the development server:
+- **Manual health alerts** — jurisdiction admins author + publish alerts.
+- **Auto health alerts** — environmental and trend-based triggers from the
+  Risk team are converted into citizen-facing alerts.
+- **Maps & resources** — heatmaps, cooling centers, outbreak overlays, and a
+  guided resource recommendation flow.
+- **Notifications** — banner, SMS, email, push (user-selectable).
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# open http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The landing page at `/` is a **showcase** linking to each work-in-progress
+surface — use it as the entry point for demos and onboarding.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+  page.tsx              showcase landing
+  (public)/             citizen-facing routes (alerts, map, resources, preferences)
+  admin/                jurisdiction admin (auth-gated)
+  api/                  route handlers
 
-## Learn More
+components/
+  alerts/  map/  admin/  resources/  ui/
 
-To learn more about Next.js, take a look at the following resources:
+lib/
+  alerts/               canonical queries / mutations
+  geo/                  zip ↔ county, geofencing
+  notifications/        channel interface (sms/email/push)
+  integrations/         seams for OTHER teams to implement
+    auth.ts             DB / auth team
+    risk-signals.ts     Risk team
+    data-sources.ts     external feeds (ArcGIS, MAG, county)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+types/alert.ts          canonical Alert type — the cross-team contract
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+docs/
+  integration.md        contracts between subteams
+  data-sources.md       URLs + provenance for every external feed
+```
 
-## Deploy on Vercel
+## How other teams plug in
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Every cross-team boundary is a TypeScript interface in `lib/integrations/`.
+Other teams supply an implementation and call `register…()` at startup —
+we don't fork their code, they don't fork ours. See
+[docs/integration.md](./docs/integration.md).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Team | Seam |
+| --- | --- |
+| Auth / DB | `lib/integrations/auth.ts` |
+| Risk | `lib/integrations/risk-signals.ts` |
+| Data feeds | `lib/integrations/data-sources.ts` |
+
+## Stack
+
+Next.js 16 (App Router) · React 19 · TypeScript · Tailwind v4 · Leaflet.
